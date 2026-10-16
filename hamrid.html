@@ -208,29 +208,34 @@ const IPH={"iPhone 18 Series":"iPhone 18 Pro Max,163.4,78,bar30;iPhone 18 Pro,15
 "iPhone 13 Series":"iPhone 13 Pro Max,160.8,78.1,tri35;iPhone 13 Pro,146.7,71.5,tri35;iPhone 13,146.7,71.5,dual27;iPhone 13 mini,131.5,64.2,dual27",
 "iPhone 12 Series":"iPhone 12 Pro Max,160.8,78.1,tri35;iPhone 12 Pro,146.7,71.5,tri35;iPhone 12,146.7,71.5,dual27;iPhone 12 mini,131.5,64.2,dual27",
 "iPhone 11 Series":"iPhone 11 Pro Max,158,77.8,tri33;iPhone 11 Pro,144,71.4,tri33;iPhone 11,150.9,75.7,dual29"};
-function svgFor(o){const [cw0,ch,cr,full]=CAMF[o.fam],r=/11/.test(o.model)?9:10,cw=full?o.w-1:cw0,W=+(o.w+24).toFixed(2),H=+(o.h+38).toFixed(2),cx=full?12.5:15;
+function svgFor(o){const [cw0,ch,cr,full]=CAMF[o.fam],r=o.r||(/11/.test(o.model)?9:10),cw=full?o.w-1:cw0,W=+(o.w+24).toFixed(2),H=+(o.h+38).toFixed(2),cx=full?12.5:15;
  return `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${W}mm" height="${H}mm" viewBox="0 0 ${W} ${H}"><title>${o.model} - Hamrid skin (back)</title>
 <g id="BG-WHITE"><rect width="${W}" height="${H}" fill="#FFFFFF"/></g>
 <g id="CUT-BODY-RED"><rect x="12.5" y="12.5" width="${+(o.w-1).toFixed(2)}" height="${+(o.h-1).toFixed(2)}" rx="${r}" ry="${r}" fill="none" stroke="#FF0000" stroke-width="0.1"/></g>
 <g id="CAMERA-VERIFY-BLUE"><rect x="${cx}" y="${full?12.5:15}" width="${+cw.toFixed(2)}" height="${ch}" rx="${cr}" ry="${cr}" fill="none" stroke="#0000FF" stroke-width="0.1" stroke-dasharray="1.2 0.8"/></g>
 <g id="LABEL"><text x="${W/2}" y="${H-4}" text-anchor="middle" font-family="Arial" font-size="5">${o.model}</text></g></svg>`}
 function builtinSkins(){return Object.entries(IPH).flatMap(([se,v])=>v.split(';').map(r=>{const [m,h,w,f]=r.split(',');const o={brand:'iPhone',series:se,model:m,h:+h,w:+w,fam:f};o.svg=svgFor(o);o.preview_url='data:image/svg+xml;utf8,'+encodeURIComponent(o.svg);return o}))}
-function dlSvg(m){const o=builtinSkins().find(x=>x.model===m);const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([o.svg],{type:'image/svg+xml'}));a.download=m+'.svg';document.body.appendChild(a);a.click();a.remove()}
+let BUILT=null;
+async function loadBuilt(){if(BUILT)return BUILT;let list=null;try{const r=await fetch('skins.json?v='+Date.now());if(r.ok){const j=await r.json();Object.assign(CAMF,j.cam||{});list=j.models}}catch(e){}
+ BUILT=list?list.map(o=>{o.svg=svgFor(o);o.preview_url='data:image/svg+xml;utf8,'+encodeURIComponent(o.svg);return o}):builtinSkins();return BUILT}
+function dlSvg(m){const o=(BUILT||[]).find(x=>x.model===m);const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([o.svg],{type:'image/svg+xml'}));a.download=m+'.svg';document.body.appendChild(a);a.click();a.remove()}
 /* skins */
-let SK=[];
+let SK=[],skinSeries='';
 async function skinsPage(){
  $('view').innerHTML=`<h2>📱 Skins</h2><p class="small" style="margin-bottom:8px">SVG vector (CorelDRAW ready, mm size). Cut se pehle ek test cut karke camera cutout verify karein.</p>${isAdmin?`<details class="card" style="margin-bottom:12px"><summary style="font-weight:800">＋ Naya skin add karein</summary>
  <select id="aBrand">${opts(BRANDS)}</select><input id="aSeries" placeholder="Series (e.g. iPhone 15 Series, Note 30)"><input id="aModel" placeholder="Model name (e.g. iPhone 15 Pro Max)">
  <p class="small">Vector file (.cdr / .svg / .eps / .pdf / .ai)</p><input id="aFile" type="file"><p class="small">Preview image (optional)</p><input id="aPrev" type="file" accept="image/*">
  <button class="btn" onclick="addSkin()">Upload skin</button><div id="smsg" class="msg"></div></details>`:''}
  <div class="chips" id="chips"></div><input id="sq" placeholder="🔍 Model search..." oninput="skinQ=this.value;drawSkins()"><div id="sl">Loading...</div>`;
- const {data}=await sb.from('skins').select('*').order('brand').order('series').order('model');SK=[...builtinSkins(),...(data||[])];drawSkins()}
+ const {data}=await sb.from('skins').select('*').order('brand').order('series').order('model');SK=[...await loadBuilt(),...(data||[])];skinSeries='';drawSkins()}
 function drawSkins(){
- $('chips').innerHTML=['All',...BRANDS].map(b=>`<button class="${b===skinBrand?'on':''}" onclick="skinBrand='${b}';drawSkins()">${b}</button>`).join('');
- const q=skinQ.toLowerCase(),L=SK.filter(s=>(skinBrand==='All'||s.brand===skinBrand)&&(s.model+' '+(s.series||'')).toLowerCase().includes(q));
- let last='';$('sl').innerHTML=L.length?L.map(s=>{const h=s.series&&s.series!==last?`<h3 style="margin:14px 0 4px;color:#22d3ee">${esc(s.series)}</h3>`:'';last=s.series||last;
- return h+`<div class="sk">${s.preview_url?`<img src="${esc(s.preview_url)}">`:''}<div><b>${esc(s.model)}</b><div class="small">${esc(s.brand)}</div></div>
- ${s.svg?`<button class="btn s" onclick="dlSvg('${esc(s.model)}')">⬇ Download SVG</button>`:`<a class="btn s" style="text-decoration:none" href="${esc(s.file_url)}" download target="_blank">⬇ Download</a>`}<button class="btn s" onclick="tutorialList('${esc(s.brand)}')">🎬 Tutorial</button>${isAdmin&&!s.svg?`<button class="btn s" style="background:#b91c1c" onclick="delSkin(${s.id})">🗑</button>`:''}</div>`}).join(''):'<p class="small">Is brand ke skins jald add ho rahe hain.</p>'}
+ $('chips').innerHTML=['All',...BRANDS].map(b=>`<button class="${b===skinBrand?'on':''}" onclick="skinBrand='${b}';skinSeries='';drawSkins()">${b}</button>`).join('');
+ const q=skinQ.trim().toLowerCase(),B=SK.filter(s=>skinBrand==='All'||s.brand===skinBrand),ser=s=>s.series||'Other';
+ const card=s=>`<div class="sk">${s.preview_url?`<img src="${esc(s.preview_url)}">`:''}<div><b>${esc(s.model)}</b><div class="small">${esc(s.brand)} • ${esc(ser(s))}</div></div>${s.svg?`<button class="btn s" onclick="dlSvg('${esc(s.model)}')">⬇ Download SVG</button>`:`<a class="btn s" style="text-decoration:none" href="${esc(s.file_url)}" download target="_blank">⬇ Download</a>`}<button class="btn s" onclick="tutorialList('${esc(s.brand)}')">🎬 Tutorial</button>${isAdmin&&!s.svg?`<button class="btn s" style="background:#b91c1c" onclick="delSkin(${s.id})">🗑</button>`:''}</div>`;
+ if(q){const L=B.filter(s=>(s.model+' '+ser(s)+' '+s.brand).toLowerCase().includes(q));$('sl').innerHTML=L.length?L.map(card).join(''):'<p class="small">Koi model nahi mila.</p>';return}
+ if(skinSeries){const L=B.filter(s=>ser(s)===skinSeries);$('sl').innerHTML=`<button class="btn s" onclick="skinSeries='';drawSkins()">← Sab series</button><h3 style="margin:10px 0;color:#22d3ee">${esc(skinSeries)} (${L.length} models)</h3>`+L.map(card).join('');return}
+ const G={};B.forEach(s=>{(G[s.brand+'|'+ser(s)]=G[s.brand+'|'+ser(s)]||[]).push(s)});
+ $('sl').innerHTML=Object.keys(G).length?`<div class="grid">${Object.values(G).map(a=>`<div class="tile" onclick="skinSeries='${esc(ser(a[0]))}';drawSkins()"><span>📱</span>${esc(ser(a[0]))}<div class="small">${esc(a[0].brand)} • ${a.length} models</div></div>`).join('')}</div>`:'<p class="small">Is brand ke skins jald add ho rahe hain.</p>'}
 const safe=n=>Date.now()+'-'+n.replace(/[^\w.-]/g,'_');
 async function addSkin(){const m=$('smsg'),f=$('aFile').files[0],model=$('aModel').value.trim();if(!f||!model){m.className='msg';return m.textContent='Model name aur vector file lazmi hain.'}
  m.className='msg ok';m.textContent='Upload ho raha hai...';
