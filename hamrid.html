@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hamrid</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+:root{--bg:#0f0b2e;--p:#7c3aed;--p2:#06b6d4;--card:#ffffff14;--t:#fff;--m:#b8b5d6}
+*{box-sizing:border-box;margin:0;font-family:system-ui,sans-serif}
+body{min-height:100vh;background:radial-gradient(circle at 20% 10%,#4c1d95,transparent 45%),radial-gradient(circle at 85% 90%,#0e7490,transparent 45%),var(--bg);color:var(--t)}
+.hide{display:none!important}
+.wrap{max-width:420px;margin:0 auto;padding:28px 18px}
+.logo{text-align:center;margin:18px 0 22px}
+.logo h1{font-size:44px;letter-spacing:2px;background:linear-gradient(90deg,#c4b5fd,#67e8f9);-webkit-background-clip:text;color:transparent}
+.logo p{color:var(--m);font-size:13px;margin-top:6px;font-style:italic}
+.card{background:var(--card);backdrop-filter:blur(14px);border:1px solid #ffffff22;border-radius:20px;padding:22px;animation:up .5s}
+@keyframes up{from{opacity:0;transform:translateY(20px)}}
+.tabs{display:flex;gap:6px;margin-bottom:16px}
+.tabs button{flex:1;padding:10px;border:0;border-radius:12px;background:#ffffff14;color:var(--m);font-weight:600}
+.tabs .on{background:linear-gradient(90deg,var(--p),var(--p2));color:#fff}
+input{width:100%;padding:13px;margin:7px 0;border-radius:12px;border:1px solid #ffffff2a;background:#ffffff10;color:#fff;font-size:15px}
+.btn{width:100%;padding:13px;margin-top:10px;border:0;border-radius:12px;background:linear-gradient(90deg,var(--p),var(--p2));color:#fff;font-weight:700;font-size:15px}
+.msg{font-size:13px;margin-top:10px;min-height:18px;color:#fca5a5}.msg.ok{color:#86efac}
+.small{font-size:12px;color:var(--m)}
+/* app */
+header{display:flex;align-items:center;gap:12px;padding:14px 16px;background:#00000040;position:sticky;top:0;z-index:5}
+header b{font-size:20px;background:linear-gradient(90deg,#c4b5fd,#67e8f9);-webkit-background-clip:text;color:transparent}
+.burger{background:none;border:0;color:#fff;font-size:26px}
+nav{position:fixed;top:0;left:-270px;width:260px;height:100%;background:#150f3d;z-index:20;padding:20px 14px;transition:.3s}
+nav.open{left:0}
+nav .who{padding:10px 6px 18px;border-bottom:1px solid #ffffff22;margin-bottom:10px;text-align:center}
+nav .who img{width:70px;height:70px;border-radius:50%;object-fit:cover;border:2px solid var(--p2)}
+nav a{display:block;padding:13px 14px;border-radius:12px;color:#fff;margin:4px 0;font-weight:600}
+nav a.on{background:linear-gradient(90deg,var(--p),var(--p2))}
+.shade{position:fixed;inset:0;background:#0008;z-index:15}
+main{padding:16px;max-width:760px;margin:0 auto;animation:up .4s}
+h2{margin-bottom:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tile{background:var(--card);border:1px solid #ffffff22;border-radius:16px;padding:18px 10px;text-align:center;font-weight:700}
+.tile span{display:block;font-size:30px;margin-bottom:6px}
+.vid{background:var(--card);border-radius:14px;padding:12px;margin:10px 0}
+.vid iframe,.vid video{width:100%;aspect-ratio:16/9;border:0;border-radius:10px;margin-top:8px}
+.avatar{width:110px;height:110px;border-radius:50%;object-fit:cover;border:3px solid var(--p2);display:block;margin:0 auto 12px;background:#ffffff1a}
+.foot{text-align:center;color:var(--m);font-size:12px;padding:22px}
+</style></head><body>
+
+<!-- AUTH -->
+<div id="auth" class="wrap">
+  <div class="logo"><h1>Hamrid</h1><p>I'm weak in study, but I can read your minds!</p></div>
+  <div class="card">
+    <div class="tabs"><button id="tLogin" class="on" onclick="tab('login')">Login</button><button id="tReg" onclick="tab('reg')">Register</button></div>
+
+    <div id="fLogin">
+      <input id="lEmail" type="email" placeholder="Email">
+      <input id="lPass" type="password" placeholder="Password">
+      <button class="btn" onclick="doLogin()">Login</button>
+    </div>
+
+    <div id="fReg" class="hide">
+      <div id="s1"><input id="rEmail" type="email" placeholder="Email"><button class="btn" onclick="sendCode()">Send 6-digit code</button></div>
+      <div id="s2" class="hide"><p class="small">Code aap ki email par bhej diya gaya hai.</p>
+        <input id="rCode" inputmode="numeric" maxlength="6" placeholder="6-digit code"><button class="btn" onclick="verifyCode()">Verify code</button></div>
+      <div id="s3" class="hide"><input id="rName" placeholder="Name"><input id="rContact" inputmode="tel" placeholder="Contact number"><input id="rPass" type="password" placeholder="Password (min 8 characters)">
+        <button class="btn" onclick="finishReg()">Create account</button></div>
+    </div>
+    <div id="amsg" class="msg"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="hide">
+  <header><button class="burger" onclick="toggleNav()">☰</button><b>Hamrid</b></header>
+  <div id="shade" class="shade hide" onclick="toggleNav()"></div>
+  <nav id="nav">
+    <div class="who"><img id="navImg" src=""><div id="navName" style="margin-top:8px;font-weight:700"></div><div id="navRole" class="small"></div></div>
+    <a href="#" data-p="dash" onclick="go('dash')">🏠 Dashboard</a>
+    <a href="#" data-p="profile" onclick="go('profile')">👤 Profile</a>
+    <a href="#" data-p="skins" onclick="go('skins')">📱 Skins</a>
+    <a href="#" data-p="data" id="navData" class="hide" onclick="go('data')">🗂️ Data</a>
+    <a href="#" onclick="logout()">🚪 Logout</a>
+  </nav>
+  <main id="view"></main>
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+// ====== APNI SUPABASE DETAILS YAHAN DALEIN ======
+const SUPABASE_URL='https://njguhbvgtvhdhqsmrcqm.supabase.co', SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5qZ3VoYnZndHZoZGhxc21yY3FtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxMDMzNTgsImV4cCI6MjEwNzY3OTM1OH0.S-dy8tQ81zqnHn29lE1a9-5reMm2R80jMCBH6kAw_n8';
+const ADMIN_EMAIL='saaqirashid@gmail.com';
+const BRANDS=['Infinix','Oppo','Vivo','Tecno','Xiaomi','iPhone'];
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let me=null, prof=null, isAdmin=false;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function say(t,ok){const m=$('amsg');m.textContent=t;m.className='msg'+(ok?' ok':'')}
+function tab(w){const l=w==='login';$('fLogin').classList.toggle('hide',!l);$('fReg').classList.toggle('hide',l);$('tLogin').classList.toggle('on',l);$('tReg').classList.toggle('on',!l);say('')}
+
+async function doLogin(){
+  say('Please wait...',true);
+  const {error}=await sb.auth.signInWithPassword({email:$('lEmail').value.trim(),password:$('lPass').value});
+  if(error)return say('Email ya password ghalat hai.');
+  boot();
+}
+async function sendCode(){
+  const email=$('rEmail').value.trim(); if(!email)return say('Email likhein.');
+  say('Code bheja ja raha hai...',true);
+  const {error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:true}});
+  if(error)return say(error.message);
+  $('s1').classList.add('hide');$('s2').classList.remove('hide');say('Code bhej diya gaya.',true);
+}
+async function verifyCode(){
+  const {error}=await sb.auth.verifyOtp({email:$('rEmail').value.trim(),token:$('rCode').value.trim(),type:'email'});
+  if(error)return say('Code ghalat ya expire ho gaya.');
+  $('s2').classList.add('hide');$('s3').classList.remove('hide');say('Email verify ho gayi. Ab details bharein.',true);
+}
+async function finishReg(){
+  const name=$('rName').value.trim(),contact=$('rContact').value.trim(),pw=$('rPass').value;
+  if(!name||!contact||!pw)return say('Name, Contact aur Password lazmi hain.');
+  if(pw.length<8)return say('Password kam az kam 8 characters ka ho.');
+  const {data,error}=await sb.auth.updateUser({password:pw,data:{name,contact}});
+  if(error)return say(error.message);
+  await sb.from('profiles').upsert({id:data.user.id,email:data.user.email,name,contact});
+  boot();
+}
+
+async function boot(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){$('auth').classList.remove('hide');$('app').classList.add('hide');return}
+  me=session.user; isAdmin=me.email.toLowerCase()===ADMIN_EMAIL;
+  let {data:p}=await sb.from('profiles').select('*').eq('id',me.id).maybeSingle();
+  if(!p){p={id:me.id,email:me.email,name:me.user_metadata?.name||'',contact:me.user_metadata?.contact||''};await sb.from('profiles').upsert(p)}
+  prof=p; $('auth').classList.add('hide');$('app').classList.remove('hide');
+  $('navData').classList.toggle('hide',!isAdmin);
+  $('foot').textContent=isAdmin?'Admin: SaaQi':'Hamrid';
+  paintNav(); go('dash');
+}
+function paintNav(){
+  $('navImg').src=prof.avatar_url||'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="70" height="70"><rect width="70" height="70" fill="#3b2a8c"/><text x="35" y="46" font-size="34" text-anchor="middle" fill="#fff">👤</text></svg>');
+  $('navName').textContent=prof.name||me.email;
+  $('navRole').textContent=isAdmin?'Admin: SaaQi':'Member';
+}
+function toggleNav(){const o=$('nav').classList.toggle('open');$('shade').classList.toggle('hide',!o)}
+function go(p){
+  document.querySelectorAll('nav a[data-p]').forEach(a=>a.classList.toggle('on',a.dataset.p===p));
+  $('nav').classList.remove('open');$('shade').classList.add('hide');
+  const v=$('view');v.style.animation='none';v.offsetHeight;v.style.animation='';
+  ({dash:dashboard,profile:profilePage,skins:skinsPage,data:dataPage})[p]();
+}
+async function logout(){await sb.auth.signOut();location.reload()}
+
+/* ---- Dashboard + tutorials ---- */
+function dashboard(){
+  $('view').innerHTML=`<h2>Salaam, ${esc(prof.name)} 👋</h2>
+  <div class="grid"><div class="tile" onclick="go('skins')"><span>📱</span>Skins</div>
+  <div class="tile" onclick="tutorialBrands()"><span>🎬</span>Tutorial</div>
+  <div class="tile" onclick="go('profile')"><span>👤</span>Profile</div></div>`;
+}
+function tutorialBrands(){
+  $('view').innerHTML=`<h2>🎬 Tutorial</h2><p class="small" style="margin-bottom:10px">Mobile brand chunein:</p>
+  <div class="grid">${BRANDS.map(b=>`<div class="tile" onclick="tutorialList('${b}')">${b}</div>`).join('')}</div>`;
+}
+async function tutorialList(brand){
+  $('view').innerHTML=`<h2>🎬 ${esc(brand)} tutorials</h2><div id="tl">Loading...</div><button class="btn" onclick="tutorialBrands()">← Back</button>`;
+  const {data}=await sb.from('tutorials').select('*').eq('brand',brand).order('id');
+  $('tl').innerHTML=(data&&data.length)?data.map(t=>`<div class="vid"><b>${esc(t.title)}</b>${player(t.video_url)}</div>`).join(''):'<p class="small">Abhi is brand ki video nahi lagi.</p>';
+}
+function player(u){
+  const m=String(u).match(/(?:youtu\.be\/|v=|embed\/)([\w-]{11})/);
+  if(m)return `<iframe src="https://www.youtube.com/embed/${m[1]}" allowfullscreen></iframe>`;
+  return `<video src="${esc(u)}" controls></video>`;
+}
+
+/* ---- Profile ---- */
+function profilePage(){
+  $('view').innerHTML=`<h2>Profile</h2><div class="card">
+  <img class="avatar" id="pImg" src="${esc(prof.avatar_url||'')}" onerror="this.removeAttribute('src')">
+  <input type="file" id="pFile" accept="image/*" class="hide" onchange="upAvatar(this.files[0])">
+  <button class="btn" style="margin-top:0" onclick="$('pFile').click()">📷 Photo badlein</button>
+  <input id="pName" value="${esc(prof.name)}" placeholder="Name" style="margin-top:14px">
+  <input value="${esc(prof.email)}" disabled><input value="${esc(prof.contact)}" disabled>
+  <button class="btn" onclick="saveName()">Save name</button><div id="pmsg" class="msg"></div></div>`;
+}
+async function saveName(){
+  const name=$('pName').value.trim(); if(!name)return;
+  const {error}=await sb.from('profiles').update({name}).eq('id',me.id);
+  if(!error){prof.name=name;paintNav();$('pmsg').className='msg ok';$('pmsg').textContent='Save ho gaya.'}
+  else $('pmsg').textContent=error.message;
+}
+async function upAvatar(f){
+  if(!f)return; $('pmsg').className='msg ok';$('pmsg').textContent='Upload ho rahi hai...';
+  const path=me.id+'/avatar-'+Date.now()+'.'+(f.name.split('.').pop()||'jpg');
+  const {error}=await sb.storage.from('avatars').upload(path,f,{upsert:true});
+  if(error){$('pmsg').className='msg';return $('pmsg').textContent=error.message}
+  const url=sb.storage.from('avatars').getPublicUrl(path).data.publicUrl;
+  await sb.from('profiles').update({avatar_url:url}).eq('id',me.id);
+  prof.avatar_url=url;paintNav();profilePage();
+}
+
+/* ---- Part 2 mein aayenge ---- */
+function skinsPage(){$('view').innerHTML='<h2>📱 Skins</h2><div class="card">Part 2 mein aa raha hai.</div>'}
+function dataPage(){$('view').innerHTML='<h2>🗂️ Data</h2><div class="card">Part 2 mein aa raha hai.</div>'}
+
+sb.auth.getSession().then(()=>boot());
+</script></body></html>
