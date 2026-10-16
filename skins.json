@@ -1,0 +1,315 @@
+{
+ "note": "Hamrid skins data. h/w = body size mm. cam: [w,h,radius,fullWidth]. Camera = approximate, verify.",
+ "cam": {
+  "bar30": [
+   0,
+   30,
+   6,
+   1
+  ],
+  "bar22": [
+   0,
+   22,
+   6,
+   1
+  ],
+  "pill": [
+   40,
+   20,
+   10,
+   0
+  ],
+  "single": [
+   16,
+   16,
+   8,
+   0
+  ],
+  "tri36": [
+   36,
+   36,
+   9,
+   0
+  ],
+  "tri35": [
+   35,
+   35,
+   9,
+   0
+  ],
+  "tri33": [
+   33,
+   33,
+   8,
+   0
+  ],
+  "vert": [
+   18,
+   33,
+   9,
+   0
+  ],
+  "dual27": [
+   27,
+   27,
+   7,
+   0
+  ],
+  "dual29": [
+   29,
+   29,
+   7,
+   0
+  ]
+ },
+ "models": [
+  {
+   "brand": "iPhone",
+   "series": "iPhone 18 Series",
+   "model": "iPhone 18 Pro Max",
+   "h": 163.4,
+   "w": 78.0,
+   "fam": "bar30"
+  },
+  {
+   "brand": "iPhone",
+   "series": "iPhone 18 Series",
+   "model": "iPhone 18 Pro",
+   "h": 150.0,
+   "w": 71.9,
+   "fam": "bar30"
+  },
+  {
+   "brand": "iPhone",
+   "series": "iPhone 17 Series",
+   "model": "iPhone 17 Pro Max",
+   "h": 163.4,
+   "w": 78.0,
+   "fam": "bar30"
+  },
+  {
+   "brand": "iPhone",
+   "series": "iPhone 17 Series",
+   "model": "iPhone 17 Pro",
+   "h": 150.0,
+   "w": 71.9,
+   "fam": "bar30"
+  },
+  {
+   "brand": "iPhone",
+   "series": "iPhone 17 Series",
+   "model": "iPhone Air",
+   "h": 156.2,
+   "w": 74.7,
+   "fam": "bar22"
+  },
+  {
+   "brand": "iPhone",
+   "series": "iPhone 17 Series",
+   "model": "iPhone 17",
+   "h": 149.6,
+   "w": 71.5,
+   "fam": "pill"
+  },
+  {
+   "brand": "iPhone",
+   "series": "iPhone 17 Series",
+   "model": "iPhone 17e",
+   "h": 146.7,
+   "w": 71.5,
+   "fam": "single"
+  },
+  {
+   "brand": "iPhone",
+   "series": "iPhone 16 Series",
+   "model": "iPhone 16 Pro Max",
+   "h": 163.0,
+   "w": 77.6,
+   "fam": "tri36"
+  },
+  {
+   "brand": "iPhone",
+   "series": "iPhone 16 Series",
+   "model": "iPhone 16 Pro",
+   "h": 149.6,
+   "w": 71.5,
+   "fam": "tri36"
+  },
+  {
+   "brand": "iPhone",
+   "series": "iPhone 16 Series",
+   "model": "iPhone 16 Plus",
+   "h": 160.9,
+   "w": 77.8,
+   "fam": "vert"
+  },
+  {
+   "brand": "iPhone",
+   "series": "iPhone 16 Series",
+   "model": "iPhone 16",
+   "h": 147.6,
+   "w": 71.6,
+   "fam": "vert"
+  },
+  {
+   "brand": "iPhone",
+   "series": "iPhone 16 Series",
+   "model": "iPhone 16e",
+   "h": 146.7,
+   "w": 71.5,
+   "fam": "single"
+  },
+  {
+   "brand": "iPhone",
+   "series": "iPhone 15 Series",
+   "model": "iPhone 15 Pro Max",
+   "h": 159.9,
+   "w": 76.7,
+   "fam": "tri36"
+  },
+  {
+   "brand": "iPhone",
+   "series": "iPhone 15 Series",
+   "model": "iPhone 15 Pro",
+   "h": 146.6,
+   "w": 70.6,
+   "fam": "tri36"
+  },
+  {
+   "brand": "iPhone",
+   "series": "iPhone 15 Series",
+   "model": "iPhone 15 Plus",
+   "h": 160.9,
+   "w": 77.8,
+   "fam": "dual27"
+  },
+  {
+   "brand": "iPhone",
+   "series": "iPhone 15 Series",
+   "model": "iPhone 15",
+   "h": 147.6,
+   "w": 71.6,
+   "fam": "dual27"
+  },
+  {
+   "brand": "iPhone",
+   "series": "iPhone 14 Series",
+   "model": "iPhone 14 Pro Max",
+   "h": 160.7,
+   "w": 77.6,
+   "fam": "tri36"
+  },
+  {
+   "brand": "iPhone",
+   "series": "iPhone 14 Series",
+   "model": "iPhone 14 Pro",
+   "h": 147.5,
+   "w": 71.5,
+   "fam": "tri36"
+  },
+  {
+   "brand": "iPhone",
+   "series": "iPhone 14 Series",
+   "model": "iPhone 14 Plus",
+   "h": 160.8,
+   "w": 78.1,
+   "fam": "dual27"
+  },
+  {
+   "brand": "iPhone",
+   "series": "iPhone 14 Series",
+   "model": "iPhone 14",
+   "h": 146.7,
+   "w": 71.5,
+   "fam": "dual27"
+  },
+  {
+   "brand": "iPhone",
+   "series": "iPhone 13 Series",
+   "model": "iPhone 13 Pro Max",
+   "h": 160.8,
+   "w": 78.1,
+   "fam": "tri35"
+  },
+  {
+   "brand": "iPhone",
+   "series": "iPhone 13 Series",
+   "model": "iPhone 13 Pro",
+   "h": 146.7,
+   "w": 71.5,
+   "fam": "tri35"
+  },
+  {
+   "brand": "iPhone",
+   "series": "iPhone 13 Series",
+   "model": "iPhone 13",
+   "h": 146.7,
+   "w": 71.5,
+   "fam": "dual27"
+  },
+  {
+   "brand": "iPhone",
+   "series": "iPhone 13 Series",
+   "model": "iPhone 13 mini",
+   "h": 131.5,
+   "w": 64.2,
+   "fam": "dual27"
+  },
+  {
+   "brand": "iPhone",
+   "series": "iPhone 12 Series",
+   "model": "iPhone 12 Pro Max",
+   "h": 160.8,
+   "w": 78.1,
+   "fam": "tri35"
+  },
+  {
+   "brand": "iPhone",
+   "series": "iPhone 12 Series",
+   "model": "iPhone 12 Pro",
+   "h": 146.7,
+   "w": 71.5,
+   "fam": "tri35"
+  },
+  {
+   "brand": "iPhone",
+   "series": "iPhone 12 Series",
+   "model": "iPhone 12",
+   "h": 146.7,
+   "w": 71.5,
+   "fam": "dual27"
+  },
+  {
+   "brand": "iPhone",
+   "series": "iPhone 12 Series",
+   "model": "iPhone 12 mini",
+   "h": 131.5,
+   "w": 64.2,
+   "fam": "dual27"
+  },
+  {
+   "brand": "iPhone",
+   "series": "iPhone 11 Series",
+   "model": "iPhone 11 Pro Max",
+   "h": 158.0,
+   "w": 77.8,
+   "fam": "tri33"
+  },
+  {
+   "brand": "iPhone",
+   "series": "iPhone 11 Series",
+   "model": "iPhone 11 Pro",
+   "h": 144.0,
+   "w": 71.4,
+   "fam": "tri33"
+  },
+  {
+   "brand": "iPhone",
+   "series": "iPhone 11 Series",
+   "model": "iPhone 11",
+   "h": 150.9,
+   "w": 75.7,
+   "fam": "dual29"
+  }
+ ]
+}
