@@ -200,7 +200,7 @@ async function upAvatar(f){if(!f)return;$('pmsg').className='msg ok';$('pmsg').t
 
 /* skins data: skins.json (+ verified camera fixes in table skin_fix) */
 let BUILT=null;const FIX={};
-const mk=o=>{if(FIX[o.model]){o.cam=FIX[o.model];o.fixed=1}o.svg=svgFor(o);o.preview_url='data:image/svg+xml;utf8,'+encodeURIComponent(o.svg);return o};
+const mk=o=>{const f=FIX[o.model];if(f){o.cam=Array.isArray(f)?f:f.cam||[];o.cuts=f.cuts||[];o.fixed=1}o.svg=svgFor(o);o.preview_url='data:image/svg+xml;utf8,'+encodeURIComponent(o.svg);return o};
 async function loadBuilt(){if(BUILT)return BUILT;let L=[];try{L=(await(await fetch('skins.json?v='+Date.now())).json()).models}catch(e){}
  try{const {data}=await sb.from('skin_fix').select('*');(data||[]).forEach(f=>FIX[f.model]=f.shapes)}catch(e){}
  BUILT=L.map(mk);return BUILT}
@@ -211,7 +211,9 @@ function geo(o){const r=o.r||(/11/.test(o.model)?9:10),t=o.t||8,M=12,G=8,bw=n2(o
  if(o.only==='back')return{W:bw+2*M,H:bh+2*M,P:back(M,M)};
  const by=M+t,bx=M+t,x2=M+bw+2*t+G,x3=n2(x2+bw+G),W=n2(x3+bw+M),yb=n2(by+bh),H=n2(yb+t+M+14);
  const cross=[[bx,by-t],[bx+bw,by-t],[bx+bw,by],[bx+bw+t,by],[bx+bw+t,yb],[bx+bw,yb],[bx+bw,yb+t],[bx,yb+t],[bx,yb],[bx-t,yb],[bx-t,by],[bx,by]].map(q=>q.map(n2));
- const P=[['p',cross,'R'],...cs(bx,by),...back(x2,by),['rr',x3,by,bw,bh,r,'R']];
+ const cuts=(o.cuts||[]).map(s=>['rr',n2(bx+s[1]),n2(by+s[2]),s[3],s[4],s[5],'R']);
+ if(o.only==='wrap')return{W:n2(bw+2*t+2*M),H:n2(bh+2*t+2*M),P:[['p',cross,'R'],...cs(bx,by),...cuts]};
+ const P=[['p',cross,'R'],...cs(bx,by),...cuts,...back(x2,by),['rr',x3,by,bw,bh,r,'R']];
  if(o.brand!=='iPhone')P.push(['c',n2(x3+bw/2),n2(by+5),4.5,'B']);
  const cy=yb+t+6;P.push(['t',n2(bx+bw/2),cy,3,'Back + Sides'],['t',n2(x2+bw/2),cy,3,'Back'],['t',n2(x3+bw/2),cy,3,'Front'],['t',n2(W/2),H-5,5,o.model]);
  return{W,H,P}}
@@ -248,15 +250,19 @@ function dl(m,f){const o=(BUILT||[]).find(x=>x.model===m);if(!o)return;
  else{const g=geo(o),px=300/25.4,w=Math.round(g.W*px),h=Math.round(g.H*px),img=new Image();
   img.onload=()=>{const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,w,h);x.drawImage(img,0,0,w,h);c.toBlob(b=>save(b,m+'.png'))};
   img.src='data:image/svg+xml;utf8,'+encodeURIComponent(o.svg.split('stroke-width="0.1"').join('stroke-width="0.35"'))}}
-/* admin: camera adjust (verified fix saved for everyone) */
-let EDIT=null;
-function camEdit(m){const o=BUILT.find(x=>x.model===m);EDIT={m,sh:JSON.parse(JSON.stringify(o.cam||[]))};edDraw()}
-function edDraw(){const o=BUILT.find(x=>x.model===EDIT.m),t=Object.assign({},o,{cam:EDIT.sh,fixed:1,only:'back'});
- $('sl').innerHTML=`<h3 style="color:#22d3ee">${esc(EDIT.m)} - Camera adjust</h3><p class="small">Asli phone se mila kar mm mein theek karein (back side, body ke top-left se x,y).</p><img style="width:150px;background:#fff;border-radius:10px;margin:8px 0" src="data:image/svg+xml;utf8,${encodeURIComponent(svgFor(t))}">`+
- EDIT.sh.map((s,i)=>`<div class="small" style="margin-top:8px">${s[0]==='c'?'Circle: x, y, diameter':'Rect: x, y, w, h, radius'} <button class="btn s" style="background:#b91c1c" onclick="EDIT.sh.splice(${i},1);edDraw()">🗑</button></div><div style="display:flex;gap:4px">${s.slice(1).map((v,j)=>`<input type="number" step="0.1" value="${v}" onchange="EDIT.sh[${i}][${j+1}]=+this.value;edDraw()">`).join('')}</div>`).join('')+
- `<button class="btn s" onclick="EDIT.sh.push(['c',20,20,12]);edDraw()">+ Circle</button><button class="btn s" onclick="EDIT.sh.push(['r',5,5,30,30,8]);edDraw()">+ Rect</button><button class="btn" onclick="edSave()">✅ Save (verified)</button><button class="btn s" onclick="drawSkins()">← Back</button>`}
-async function edSave(){const {error}=await sb.from('skin_fix').upsert({model:EDIT.m,shapes:EDIT.sh});if(error)return alert(error.message+' (SQL part 3 chalayi?)');
- FIX[EDIT.m]=EDIT.sh;const i=BUILT.findIndex(x=>x.model===EDIT.m);BUILT[i]=mk(BUILT[i]);SK=[...BUILT,...SK.filter(x=>!x.svg)];drawSkins()}
+/* admin: camera + side cuts adjust (verified fix saved for everyone) */
+let EDIT=null;const cl=x=>JSON.parse(JSON.stringify(x||[]));
+function camEdit(m){const o=BUILT.find(x=>x.model===m);EDIT={m,cam:cl(o.cam),cuts:cl(o.cuts)};edDraw()}
+function edRows(k){return EDIT[k].map((s,i)=>`<div class="small" style="margin-top:8px">${s[0]==='c'?'Circle: x, y, diameter':'Rect: x, y, width, height, radius'} <button class="btn s" style="background:#b91c1c" onclick="EDIT.${k}.splice(${i},1);edDraw()">🗑</button></div><div style="display:flex;gap:4px">${s.slice(1).map((v,j)=>`<input type="number" step="0.1" value="${v}" onchange="EDIT.${k}[${i}][${j+1}]=+this.value;edDraw()">`).join('')}</div>`).join('')}
+function addCut(k){const o=BUILT.find(x=>x.model===EDIT.m),t=o.t||8,bw=o.w-1,bh=o.h-1,u=t*.5;
+ EDIT.cuts.push({L:['r',-t*.75,40,u,14,1],R:['r',bw+t*.25,50,u,14,1],B:['r',bw/2-6,bh+t*.25,12,u,1],T:['r',bw/2-4,-t*.75,8,u,1]}[k].map((v,i)=>i?n2(v):v));edDraw()}
+function edDraw(){const o=BUILT.find(x=>x.model===EDIT.m),t=Object.assign({},o,{cam:EDIT.cam,cuts:EDIT.cuts,fixed:1,only:'wrap'});
+ $('sl').innerHTML=`<h3 style="color:#22d3ee">${esc(EDIT.m)} - Camera & Cuts</h3><p class="small">Asli phone se mila kar mm mein theek karein. x,y = back panel ke top-left se. Side flap par cut ke liye x ya y minus (-) ya zyada rakhein.</p><img style="width:170px;background:#fff;border-radius:10px;margin:8px 0" src="data:image/svg+xml;utf8,${encodeURIComponent(svgFor(t))}">
+ <h3 style="margin-top:8px">📷 Camera</h3>${edRows('cam')}<button class="btn s" onclick="EDIT.cam.push(['c',20,20,12]);edDraw()">+ Circle</button><button class="btn s" onclick="EDIT.cam.push(['r',5,5,30,30,8]);edDraw()">+ Rect</button>
+ <h3 style="margin-top:12px">🔘 Side buttons / ports</h3>${edRows('cuts')}<button class="btn s" onclick="addCut('L')">+ Left</button><button class="btn s" onclick="addCut('R')">+ Right</button><button class="btn s" onclick="addCut('B')">+ Bottom port</button><button class="btn s" onclick="addCut('T')">+ Top mic</button>
+ <button class="btn" onclick="edSave()">✅ Save (verified)</button><button class="btn s" onclick="drawSkins()">← Back</button>`}
+async function edSave(){const {error}=await sb.from('skin_fix').upsert({model:EDIT.m,shapes:{cam:EDIT.cam,cuts:EDIT.cuts}});if(error)return alert(error.message+' (SQL part 3 chalayi?)');
+ FIX[EDIT.m]={cam:EDIT.cam,cuts:EDIT.cuts};const i=BUILT.findIndex(x=>x.model===EDIT.m);BUILT[i]=mk(BUILT[i]);SK=[...BUILT,...SK.filter(x=>!x.svg)];drawSkins()}
 /* skins */
 let SK=[],skinSeries='';
 async function skinsPage(){
@@ -269,7 +275,7 @@ async function skinsPage(){
 function drawSkins(){
  $('chips').innerHTML=['All',...BRANDS].map(b=>`<button class="${b===skinBrand?'on':''}" onclick="skinBrand='${b}';skinSeries='';drawSkins()">${b}</button>`).join('');
  const q=skinQ.trim().toLowerCase(),B=SK.filter(s=>skinBrand==='All'||s.brand===skinBrand),ser=s=>s.series||'Other';
- const card=s=>`<div class="sk">${s.preview_url?`<img src="${esc(s.preview_url)}">`:''}<div><b>${esc(s.model)}${s.fixed?' ✅':''}</b><div class="small">${esc(s.brand)} • ${esc(ser(s))}</div></div>${s.svg?`${['SVG','PDF','DXF','PNG'].map(f=>`<button class="btn s" onclick="dl('${esc(s.model)}','${f}')">⬇ ${f}</button>`).join('')}`:`<a class="btn s" style="text-decoration:none" href="${esc(s.file_url)}" download target="_blank">⬇ Download</a>`}<button class="btn s" onclick="tutorialList('${esc(s.brand)}')">🎬 Tutorial</button>${isAdmin&&s.svg?`<button class="btn s" onclick="camEdit('${esc(s.model)}')">✏️ Camera</button>`:''}${isAdmin&&!s.svg?`<button class="btn s" style="background:#b91c1c" onclick="delSkin(${s.id})">🗑</button>`:''}</div>`;
+ const card=s=>`<div class="sk">${s.preview_url?`<img src="${esc(s.preview_url)}">`:''}<div><b>${esc(s.model)}${s.fixed?' ✅':''}</b><div class="small">${esc(s.brand)} • ${esc(ser(s))}</div></div>${s.svg?`${['SVG','PDF','DXF','PNG'].map(f=>`<button class="btn s" onclick="dl('${esc(s.model)}','${f}')">⬇ ${f}</button>`).join('')}`:`<a class="btn s" style="text-decoration:none" href="${esc(s.file_url)}" download target="_blank">⬇ Download</a>`}<button class="btn s" onclick="tutorialList('${esc(s.brand)}')">🎬 Tutorial</button>${isAdmin&&s.svg?`<button class="btn s" onclick="camEdit('${esc(s.model)}')">✏️ Camera & Cuts</button>`:''}${isAdmin&&!s.svg?`<button class="btn s" style="background:#b91c1c" onclick="delSkin(${s.id})">🗑</button>`:''}</div>`;
  if(q){const L=B.filter(s=>(s.model+' '+ser(s)+' '+s.brand).toLowerCase().includes(q));$('sl').innerHTML=L.length?L.map(card).join(''):'<p class="small">Koi model nahi mila.</p>';return}
  if(skinSeries){const L=B.filter(s=>ser(s)===skinSeries);$('sl').innerHTML=`<button class="btn s" onclick="skinSeries='';drawSkins()">← Sab series</button><h3 style="margin:10px 0;color:#22d3ee">${esc(skinSeries)} (${L.length} models)</h3>`+L.map(card).join('');return}
  const G={};B.forEach(s=>{(G[s.brand+'|'+ser(s)]=G[s.brand+'|'+ser(s)]||[]).push(s)});
