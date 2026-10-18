@@ -210,27 +210,24 @@ function presetCuts(o){const bw=o.w-1,bh=o.h-1,t=o.t||8,u=t*.5,x1=-t*.75,x2=bw+t
  const L=ip?[[x1,.1*bh,u,6],[x1,.17*bh,u,11],[x1,.28*bh,u,11],[x2,.27*bh,u,16],[c-5,yb,10,u],[c-22,yb,14,u],[c+8,yb,14,u]]
  :[[x2,.17*bh,u,24],[x2,.31*bh,u,10],[c-5,yb,10,u],[bw*.78-7,yb,14,u],[bw*.2,yb,3,u],[bw*.7,yt,3,u]];
  return L.map(q=>['r',...q.map(n2),Math.min(1,n2(u/2))])}
-function geo(o){const r=o.r||(/11/.test(o.model)?9:10),t=o.t||8,M=12,G=8,bw=n2(o.w-1),bh=n2(o.h-1),cc=o.fixed?'R':'B';
- const cs=(ox,oy)=>(o.cam||[]).map(s=>s[0]==='c'?['c',n2(ox+s[1]),n2(oy+s[2]),s[3],cc]:['rr',n2(ox+s[1]),n2(oy+s[2]),s[3],s[4],s[5],cc]);
- const back=(ox,oy)=>[['rr',ox,oy,bw,bh,r,'R'],...cs(ox,oy)];
+function geo(o){const r=o.r||(/11/.test(o.model)?9:10),t=o.t||8,M=12,G=8,bw=n2(o.w-1),bh=n2(o.h-1),cc='W';
+ const cs=(ox,oy)=>(o.cam||[]).map(s=>s[0]==='c'?['c',n2(ox+s[1]),n2(oy+s[2]),s[3],'L']:['rr',n2(ox+s[1]),n2(oy+s[2]),s[3],s[4],s[5],'L']);
+ const back=(ox,oy)=>[['rr',ox,oy,bw,bh,r,'K'],...cs(ox,oy)];
  if(o.only==='back')return{W:bw+2*M,H:bh+2*M,P:back(M,M)};
- const by=M+t,bx=M+t,bx2=n2(M+bw+2*t+G+t),x3=n2(bx2+bw+t+G),x4=n2(x3+bw+G),W=n2(x4+bw+M),yb=n2(by+bh),H=n2(yb+t+M+14);
+ const by=M+t,bx=M+t,bx2=n2(M+bw+2*t+G+t),x3=n2(bx2+bw+t+G),W=n2(x3+bw+M),yb=n2(by+bh),H=n2(yb+t+M+14);
  const cross=[[bx,by-t],[bx+bw,by-t],[bx+bw,by],[bx+bw+t,by],[bx+bw+t,yb],[bx+bw,yb],[bx+bw,yb+t],[bx,yb+t],[bx,yb],[bx-t,yb],[bx-t,by],[bx,by]].map(q=>q.map(n2));
  const cu=o.fixed?(o.cuts||[]):presetCuts(o),cq=(ox,f)=>cu.filter(f).map(s=>['rr',n2(ox+s[1]),n2(by+s[2]),s[3],s[4],s[5],cc]);
- if(o.only==='wrap')return{W:n2(bw+2*t+2*M),H:n2(bh+2*t+2*M),P:[['p',cross,'R'],...cs(bx,by),...cu.map(s=>['rr',n2(bx+s[1]),n2(by+s[2]),s[3],s[4],s[5],cc])]};
- const P=[['p',cross,'R'],...cs(bx,by),...cu.map(s=>['rr',n2(bx+s[1]),n2(by+s[2]),s[3],s[4],s[5],cc]),
-  ['rr',n2(bx2-t),by,n2(bw+2*t),bh,r,'R'],...cs(bx2,by),...cq(bx2,s=>s[2]>=0&&s[2]+s[4]<=bh),
-  ...back(x3,by),['rr',x4,by,bw,bh,r,'R']];
- if(o.brand!=='iPhone')P.push(['c',n2(x4+bw/2),n2(by+5),4.5,'B']);
- const cy=yb+t+6;P.push(['t',n2(bx+bw/2),cy,3,'Full Wrap'],['t',n2(bx2+bw/2),cy,3,'Side Wrap'],['t',n2(x3+bw/2),cy,3,'Back'],['t',n2(x4+bw/2),cy,3,'Front'],['t',n2(W/2),H-5,5,o.model]);
+ if(o.only==='wrap')return{W:n2(bw+2*t+2*M),H:n2(bh+2*t+2*M),P:[['p',cross,'K'],...cs(bx,by),...cu.map(s=>['rr',n2(bx+s[1]),n2(by+s[2]),s[3],s[4],s[5],cc])]};
+ const P=[['p',cross,'K'],...cs(bx,by),...cu.map(s=>['rr',n2(bx+s[1]),n2(by+s[2]),s[3],s[4],s[5],cc]),
+  ['rr',n2(bx2-t),by,n2(bw+2*t),bh,r,'K'],...cs(bx2,by),...cq(bx2,s=>s[2]>=0&&s[2]+s[4]<=bh),
+  ...back(x3,by)];
+ const cy=yb+t+6;P.push(['t',n2(bx+bw/2),cy,3,'Full Wrap'],['t',n2(bx2+bw/2),cy,3,'Side Wrap'],['t',n2(x3+bw/2),cy,3,'Back'],['t',n2(W/2),H-5,5,o.model]);
  return{W,H,P}}
-function svgFor(o){const g=geo(o),f=o.fixed,at=c=>`fill="none" stroke="${c==='R'?'#FF0000':'#0000FF'}" stroke-width="0.1"`,
- sh=p=>{const k=p[0],a=at(p[p.length-1]);return k==='rr'?`<rect x="${p[1]}" y="${p[2]}" width="${p[3]}" height="${p[4]}" rx="${p[5]}" ry="${p[5]}" ${a}/>`:k==='c'?`<circle cx="${p[1]}" cy="${p[2]}" r="${p[3]/2}" ${a}/>`:`<polygon points="${p[1].map(q=>q.join(',')).join(' ')}" ${a}/>`},
- G=c=>g.P.filter(p=>p[0]!=='t'&&p[p.length-1]===c).map(sh).join('');
- return `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${g.W}mm" height="${g.H}mm" viewBox="0 0 ${g.W} ${g.H}"><title>${o.model} - Hamrid skin template</title>
+function svgFor(o){const g=geo(o),
+ sh=p=>{const k=p[0],c=p[p.length-1],a=c==='K'?'fill="#000000" stroke="none"':c==='W'?'fill="#FFFFFF" stroke="none"':'fill="none" stroke="#FFFFFF" stroke-width="0.8"';return k==='rr'?`<rect x="${p[1]}" y="${p[2]}" width="${p[3]}" height="${p[4]}" rx="${p[5]}" ry="${p[5]}" ${a}/>`:k==='c'?`<circle cx="${p[1]}" cy="${p[2]}" r="${p[3]/2}" ${a}/>`:`<polygon points="${p[1].map(q=>q.join(',')).join(' ')}" ${a}/>`};
+ return `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${g.W}mm" height="${g.H}mm" viewBox="0 0 ${g.W} ${g.H}"><title>${o.model} - Hamrid skin template (back only)</title>
 <g id="BG-WHITE"><rect width="${g.W}" height="${g.H}" fill="#FFFFFF"/></g>
-<g id="CUT-RED">${G('R')}</g>
-<g id="CAMERA-${f?'CUT-RED':'VERIFY-BLUE'}">${G('B')}</g>
+<g id="SKIN-BLACK-WHITE-CUTS">${g.P.filter(p=>p[0]!=='t').map(sh).join('')}</g>
 <g id="LABELS">${g.P.filter(p=>p[0]==='t').map(p=>`<text x="${p[1]}" y="${p[2]}" font-size="${p[3]}" text-anchor="middle" font-family="Arial">${p[4]}</text>`).join('')}</g></svg>`}
 function save(b,n){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;document.body.appendChild(a);a.click();a.remove()}
 function dxfFor(o){const g=geo(o),F=(...a)=>a.join('\n')+'\n';let s=F(0,'SECTION',2,'HEADER',9,'$INSUNITS',70,4,0,'ENDSEC',0,'SECTION',2,'ENTITIES');
@@ -238,14 +235,14 @@ function dxfFor(o){const g=geo(o),F=(...a)=>a.join('\n')+'\n';let s=F(0,'SECTION
  const rr=([x,y,w,h,r],L,c)=>{const ar=(cx,cy,a1,a2)=>s+=F(0,'ARC',8,L,62,c,10,cx,20,g.H-cy,40,r,50,a1,51,a2);
   ln(x+r,y+h,x+w-r,y+h,L,c);ln(x+w,y+h-r,x+w,y+r,L,c);ln(x+w-r,y,x+r,y,L,c);ln(x,y+r,x,y+h-r,L,c);
   ar(x+r,y+h-r,180,270);ar(x+w-r,y+h-r,270,360);ar(x+w-r,y+r,0,90);ar(x+r,y+r,90,180)};
- g.P.forEach(p=>{if(p[0]==='t')return;const R=p[p.length-1]==='R',L=R?'CUT':'CAMERA',c=R?1:5;
+ g.P.forEach(p=>{if(p[0]==='t')return;const z=p[p.length-1],L=z==='K'?'CUT':z==='W'?'HOLES':'CAMERA',c=z==='K'?1:z==='W'?3:5;
   if(p[0]==='rr')rr(p.slice(1,6),L,c);else if(p[0]==='c')s+=F(0,'CIRCLE',8,L,62,c,10,p[1],20,g.H-p[2],40,p[3]/2);else p[1].forEach((q,i)=>{const z=p[1][(i+1)%p[1].length];ln(q[0],q[1],z[0],z[1],L,c)})});
  return s+F(0,'ENDSEC',0,'EOF')}
 function pdfFor(o){const g=geo(o),k=72/25.4,PW=g.W*k,PH=g.H*k,m=v=>(v*k).toFixed(3);
  const rr=([x,y,w,h,r])=>{const Y=g.H-(y+h),c=r*.5523,X=x;return `${m(X+r)} ${m(Y)} m ${m(X+w-r)} ${m(Y)} l ${m(X+w-r+c)} ${m(Y)} ${m(X+w)} ${m(Y+r-c)} ${m(X+w)} ${m(Y+r)} c ${m(X+w)} ${m(Y+h-r)} l ${m(X+w)} ${m(Y+h-r+c)} ${m(X+w-r+c)} ${m(Y+h)} ${m(X+w-r)} ${m(Y+h)} c ${m(X+r)} ${m(Y+h)} l ${m(X+r-c)} ${m(Y+h)} ${m(X)} ${m(Y+h-r+c)} ${m(X)} ${m(Y+h-r)} c ${m(X)} ${m(Y+r)} l ${m(X)} ${m(Y+r-c)} ${m(X+r-c)} ${m(Y)} ${m(X+r)} ${m(Y)} c h S\n`};
  const ci=(cx,cy,d)=>{const r=d/2,Y=g.H-cy,e=r*.5523;return `${m(cx+r)} ${m(Y)} m ${m(cx+r)} ${m(Y+e)} ${m(cx+e)} ${m(Y+r)} ${m(cx)} ${m(Y+r)} c ${m(cx-e)} ${m(Y+r)} ${m(cx-r)} ${m(Y+e)} ${m(cx-r)} ${m(Y)} c ${m(cx-r)} ${m(Y-e)} ${m(cx-e)} ${m(Y-r)} ${m(cx)} ${m(Y-r)} c ${m(cx+e)} ${m(Y-r)} ${m(cx+r)} ${m(Y-e)} ${m(cx+r)} ${m(Y)} c h S\n`};
  const po=a=>a.map((q,i)=>`${m(q[0])} ${m(g.H-q[1])} ${i?'l':'m'}`).join(' ')+' h S\n';
- const body=g.P.map(p=>p[0]==='t'?`0 g BT /F1 ${(p[3]*k).toFixed(1)} Tf ${m(p[1]-p[4].length*p[3]*.26)} ${m(g.H-p[2])} Td (${p[4]}) Tj ET\n`:(p[p.length-1]==='R'?'1 0 0 RG ':'0 0 1 RG ')+(p[0]==='rr'?rr(p.slice(1,6)):p[0]==='c'?ci(p[1],p[2],p[3]):po(p[1]))).join('');
+ const body=g.P.map(p=>p[0]==='t'?`0 g BT /F1 ${(p[3]*k).toFixed(1)} Tf ${m(p[1]-p[4].length*p[3]*.26)} ${m(g.H-p[2])} Td (${p[4]}) Tj ET\n`:({L:'1 G 2.27 w ',K:'0 g ',W:'1 g '}[p[p.length-1]])+((q=>p[p.length-1]==='L'?q:q.replace(' S\n',' f\n'))(p[0]==='rr'?rr(p.slice(1,6)):p[0]==='c'?ci(p[1],p[2],p[3]):po(p[1])))).join('');
  const st=`1 1 1 rg 0 0 ${PW.toFixed(2)} ${PH.toFixed(2)} re f 0.283 w\n${body}`;
  const ob=['<</Type/Catalog/Pages 2 0 R>>','<</Type/Pages/Kids[3 0 R]/Count 1>>',`<</Type/Page/Parent 2 0 R/MediaBox[0 0 ${PW.toFixed(2)} ${PH.toFixed(2)}]/Contents 4 0 R/Resources<</Font<</F1 5 0 R>>>>>>`,`<</Length ${st.length}>>\nstream\n${st}\nendstream`,'<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>'];
  let out='%PDF-1.4\n',off=[];ob.forEach((b,i)=>{off.push(out.length);out+=`${i+1} 0 obj\n${b}\nendobj\n`});const xr=out.length;
@@ -273,7 +270,7 @@ async function edSave(){const {error}=await sb.from('skin_fix').upsert({model:ED
 /* skins */
 let SK=[],skinSeries='';
 async function skinsPage(){
- $('view').innerHTML=`<h2>📱 Skins</h2><p class="small" style="margin-bottom:8px">Formats: SVG, PDF, DXF (plotter/Cutmate), PNG. CDR ke liye SVG/PDF Corel mein khol kar Save As CDR karein. Neeli line camera = abhi verify nahi, ✅ = verified (laal cut).</p>${isAdmin?`<details class="card" style="margin-bottom:12px"><summary style="font-weight:800">＋ Naya skin add karein</summary>
+ $('view').innerHTML=`<h2>📱 Skins</h2><p class="small" style="margin-bottom:8px">Sirf back skin: black shape, white camera/button cuts, white background. Formats: SVG, PDF, DXF (plotter/Cutmate), PNG. CDR ke liye SVG/PDF Corel mein khol kar Save As CDR karein. ✅ = camera/cuts verified.</p>${isAdmin?`<details class="card" style="margin-bottom:12px"><summary style="font-weight:800">＋ Naya skin add karein</summary>
  <select id="aBrand">${opts(BRANDS)}</select><input id="aSeries" placeholder="Series (e.g. iPhone 15 Series, Note 30)"><input id="aModel" placeholder="Model name (e.g. iPhone 15 Pro Max)">
  <p class="small">Vector file (.cdr / .svg / .eps / .pdf / .ai)</p><input id="aFile" type="file"><p class="small">Preview image (optional)</p><input id="aPrev" type="file" accept="image/*">
  <button class="btn" onclick="addSkin()">Upload skin</button><div id="smsg" class="msg"></div></details>`:''}
