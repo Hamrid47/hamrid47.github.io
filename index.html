@@ -205,7 +205,7 @@ async function loadBuilt(){if(BUILT)return BUILT;let L=[];try{L=(await(await fet
  try{const {data}=await sb.from('skin_fix').select('*');(data||[]).forEach(f=>FIX[f.model]=f.shapes)}catch(e){}
  BUILT=L.map(mk);return BUILT}
 function geo(o){const r=o.r||(/11/.test(o.model)?9:10);return{W:+(o.w+24).toFixed(2),H:+(o.h+38).toFixed(2),body:[12.5,12.5,o.w-1,o.h-1,r],cam:(o.cam||[]).map(s=>s[0]==='c'?['c',12.5+s[1],12.5+s[2],s[3]]:['r',12.5+s[1],12.5+s[2],s[3],s[4],s[5]])}}
-function svgFor(o){const g=geo(o),f=o.fixed,st=f?'fill="none" stroke="#FF0000" stroke-width="0.1"':'fill="none" stroke="#0000FF" stroke-width="0.1" stroke-dasharray="1.2 0.8"',[x,y,w,h,r]=g.body;
+function svgFor(o){const g=geo(o),f=o.fixed,st=f?'fill="none" stroke="#FF0000" stroke-width="0.1"':'fill="none" stroke="#0000FF" stroke-width="0.1"',[x,y,w,h,r]=g.body;
  const cam=g.cam.map(s=>s[0]==='c'?`<circle cx="${s[1]}" cy="${s[2]}" r="${s[3]/2}" ${st}/>`:`<rect x="${s[1]}" y="${s[2]}" width="${s[3]}" height="${s[4]}" rx="${s[5]}" ry="${s[5]}" ${st}/>`).join('');
  return `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${g.W}mm" height="${g.H}mm" viewBox="0 0 ${g.W} ${g.H}"><title>${o.model} - Hamrid skin (back)</title>
 <g id="BG-WHITE"><rect width="${g.W}" height="${g.H}" fill="#FFFFFF"/></g>
@@ -221,7 +221,7 @@ function dxfFor(o){const g=geo(o),F=(...a)=>a.join('\n')+'\n';let s=F(0,'SECTION
 function pdfFor(o){const g=geo(o),k=72/25.4,PW=g.W*k,PH=g.H*k,m=v=>(v*k).toFixed(3);
  const rr=([x,y,w,h,r])=>{const Y=g.H-(y+h),c=r*.5523,X=x;return `${m(X+r)} ${m(Y)} m ${m(X+w-r)} ${m(Y)} l ${m(X+w-r+c)} ${m(Y)} ${m(X+w)} ${m(Y+r-c)} ${m(X+w)} ${m(Y+r)} c ${m(X+w)} ${m(Y+h-r)} l ${m(X+w)} ${m(Y+h-r+c)} ${m(X+w-r+c)} ${m(Y+h)} ${m(X+w-r)} ${m(Y+h)} c ${m(X+r)} ${m(Y+h)} l ${m(X+r-c)} ${m(Y+h)} ${m(X)} ${m(Y+h-r+c)} ${m(X)} ${m(Y+h-r)} c ${m(X)} ${m(Y+r)} l ${m(X)} ${m(Y+r-c)} ${m(X+r-c)} ${m(Y)} ${m(X+r)} ${m(Y)} c h S\n`};
  const ci=(cx,cy,d)=>{const r=d/2,Y=g.H-cy,e=r*.5523;return `${m(cx+r)} ${m(Y)} m ${m(cx+r)} ${m(Y+e)} ${m(cx+e)} ${m(Y+r)} ${m(cx)} ${m(Y+r)} c ${m(cx-e)} ${m(Y+r)} ${m(cx-r)} ${m(Y+e)} ${m(cx-r)} ${m(Y)} c ${m(cx-r)} ${m(Y-e)} ${m(cx-e)} ${m(Y-r)} ${m(cx)} ${m(Y-r)} c ${m(cx+e)} ${m(Y-r)} ${m(cx+r)} ${m(Y-e)} ${m(cx+r)} ${m(Y)} c h S\n`};
- const st=`1 1 1 rg 0 0 ${PW.toFixed(2)} ${PH.toFixed(2)} re f 0.283 w 1 0 0 RG ${rr(g.body)}${o.fixed?'':'0 0 1 RG [3.4 2.3] 0 d '}${g.cam.map(q=>q[0]==='c'?ci(q[1],q[2],q[3]):rr(q.slice(1))).join('')}[] 0 d 0 g BT /F1 14 Tf ${(PW/2-o.model.length*3.6).toFixed(1)} ${m(4)} Td (${o.model}) Tj ET`;
+ const st=`1 1 1 rg 0 0 ${PW.toFixed(2)} ${PH.toFixed(2)} re f 0.283 w 1 0 0 RG ${rr(g.body)}${o.fixed?'':'0 0 1 RG '}${g.cam.map(q=>q[0]==='c'?ci(q[1],q[2],q[3]):rr(q.slice(1))).join('')}[] 0 d 0 g BT /F1 14 Tf ${(PW/2-o.model.length*3.6).toFixed(1)} ${m(4)} Td (${o.model}) Tj ET`;
  const ob=['<</Type/Catalog/Pages 2 0 R>>','<</Type/Pages/Kids[3 0 R]/Count 1>>',`<</Type/Page/Parent 2 0 R/MediaBox[0 0 ${PW.toFixed(2)} ${PH.toFixed(2)}]/Contents 4 0 R/Resources<</Font<</F1 5 0 R>>>>>>`,`<</Length ${st.length}>>\nstream\n${st}\nendstream`,'<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>'];
  let out='%PDF-1.4\n',off=[];ob.forEach((b,i)=>{off.push(out.length);out+=`${i+1} 0 obj\n${b}\nendobj\n`});const xr=out.length;
  return out+`xref\n0 6\n0000000000 65535 f \n`+off.map(v=>String(v).padStart(10,'0')+' 00000 n \n').join('')+`trailer\n<</Size 6/Root 1 0 R>>\nstartxref\n${xr}\n%%EOF`}
@@ -244,7 +244,7 @@ async function edSave(){const {error}=await sb.from('skin_fix').upsert({model:ED
 /* skins */
 let SK=[],skinSeries='';
 async function skinsPage(){
- $('view').innerHTML=`<h2>📱 Skins</h2><p class="small" style="margin-bottom:8px">Formats: SVG, PDF, DXF (plotter/Cutmate), PNG. CDR ke liye SVG/PDF Corel mein khol kar Save As CDR karein. Neeli dashed camera = abhi verify nahi, ✅ = verified (laal cut).</p>${isAdmin?`<details class="card" style="margin-bottom:12px"><summary style="font-weight:800">＋ Naya skin add karein</summary>
+ $('view').innerHTML=`<h2>📱 Skins</h2><p class="small" style="margin-bottom:8px">Formats: SVG, PDF, DXF (plotter/Cutmate), PNG. CDR ke liye SVG/PDF Corel mein khol kar Save As CDR karein. Neeli line camera = abhi verify nahi, ✅ = verified (laal cut).</p>${isAdmin?`<details class="card" style="margin-bottom:12px"><summary style="font-weight:800">＋ Naya skin add karein</summary>
  <select id="aBrand">${opts(BRANDS)}</select><input id="aSeries" placeholder="Series (e.g. iPhone 15 Series, Note 30)"><input id="aModel" placeholder="Model name (e.g. iPhone 15 Pro Max)">
  <p class="small">Vector file (.cdr / .svg / .eps / .pdf / .ai)</p><input id="aFile" type="file"><p class="small">Preview image (optional)</p><input id="aPrev" type="file" accept="image/*">
  <button class="btn" onclick="addSkin()">Upload skin</button><div id="smsg" class="msg"></div></details>`:''}
