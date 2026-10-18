@@ -205,17 +205,24 @@ async function loadBuilt(){if(BUILT)return BUILT;let L=[];try{L=(await(await fet
  try{const {data}=await sb.from('skin_fix').select('*');(data||[]).forEach(f=>FIX[f.model]=f.shapes)}catch(e){}
  BUILT=L.map(mk);return BUILT}
 const n2=v=>+(+v).toFixed(2);
+/* default side cuts (generic layout, approximate until verified): [ 'r', x, y, w, h, radius ] mm from back panel top-left */
+function presetCuts(o){const bw=o.w-1,bh=o.h-1,t=o.t||8,u=t*.5,x1=-t*.75,x2=bw+t*.25,yb=bh+t*.25,yt=-t*.75,ip=o.brand==='iPhone',c=bw/2;
+ const L=ip?[[x1,.1*bh,u,6],[x1,.17*bh,u,11],[x1,.28*bh,u,11],[x2,.27*bh,u,16],[c-5,yb,10,u],[c-22,yb,14,u],[c+8,yb,14,u]]
+ :[[x2,.17*bh,u,24],[x2,.31*bh,u,10],[c-5,yb,10,u],[bw*.78-7,yb,14,u],[bw*.2,yb,3,u],[bw*.7,yt,3,u]];
+ return L.map(q=>['r',...q.map(n2),Math.min(1,n2(u/2))])}
 function geo(o){const r=o.r||(/11/.test(o.model)?9:10),t=o.t||8,M=12,G=8,bw=n2(o.w-1),bh=n2(o.h-1),cc=o.fixed?'R':'B';
  const cs=(ox,oy)=>(o.cam||[]).map(s=>s[0]==='c'?['c',n2(ox+s[1]),n2(oy+s[2]),s[3],cc]:['rr',n2(ox+s[1]),n2(oy+s[2]),s[3],s[4],s[5],cc]);
  const back=(ox,oy)=>[['rr',ox,oy,bw,bh,r,'R'],...cs(ox,oy)];
  if(o.only==='back')return{W:bw+2*M,H:bh+2*M,P:back(M,M)};
- const by=M+t,bx=M+t,x2=M+bw+2*t+G,x3=n2(x2+bw+G),W=n2(x3+bw+M),yb=n2(by+bh),H=n2(yb+t+M+14);
+ const by=M+t,bx=M+t,bx2=n2(M+bw+2*t+G+t),x3=n2(bx2+bw+t+G),x4=n2(x3+bw+G),W=n2(x4+bw+M),yb=n2(by+bh),H=n2(yb+t+M+14);
  const cross=[[bx,by-t],[bx+bw,by-t],[bx+bw,by],[bx+bw+t,by],[bx+bw+t,yb],[bx+bw,yb],[bx+bw,yb+t],[bx,yb+t],[bx,yb],[bx-t,yb],[bx-t,by],[bx,by]].map(q=>q.map(n2));
- const cuts=(o.cuts||[]).map(s=>['rr',n2(bx+s[1]),n2(by+s[2]),s[3],s[4],s[5],'R']);
- if(o.only==='wrap')return{W:n2(bw+2*t+2*M),H:n2(bh+2*t+2*M),P:[['p',cross,'R'],...cs(bx,by),...cuts]};
- const P=[['p',cross,'R'],...cs(bx,by),...cuts,...back(x2,by),['rr',x3,by,bw,bh,r,'R']];
- if(o.brand!=='iPhone')P.push(['c',n2(x3+bw/2),n2(by+5),4.5,'B']);
- const cy=yb+t+6;P.push(['t',n2(bx+bw/2),cy,3,'Back + Sides'],['t',n2(x2+bw/2),cy,3,'Back'],['t',n2(x3+bw/2),cy,3,'Front'],['t',n2(W/2),H-5,5,o.model]);
+ const cu=o.fixed?(o.cuts||[]):presetCuts(o),cq=(ox,f)=>cu.filter(f).map(s=>['rr',n2(ox+s[1]),n2(by+s[2]),s[3],s[4],s[5],cc]);
+ if(o.only==='wrap')return{W:n2(bw+2*t+2*M),H:n2(bh+2*t+2*M),P:[['p',cross,'R'],...cs(bx,by),...cu.map(s=>['rr',n2(bx+s[1]),n2(by+s[2]),s[3],s[4],s[5],cc])]};
+ const P=[['p',cross,'R'],...cs(bx,by),...cu.map(s=>['rr',n2(bx+s[1]),n2(by+s[2]),s[3],s[4],s[5],cc]),
+  ['rr',n2(bx2-t),by,n2(bw+2*t),bh,r,'R'],...cs(bx2,by),...cq(bx2,s=>s[2]>=0&&s[2]+s[4]<=bh),
+  ...back(x3,by),['rr',x4,by,bw,bh,r,'R']];
+ if(o.brand!=='iPhone')P.push(['c',n2(x4+bw/2),n2(by+5),4.5,'B']);
+ const cy=yb+t+6;P.push(['t',n2(bx+bw/2),cy,3,'Full Wrap'],['t',n2(bx2+bw/2),cy,3,'Side Wrap'],['t',n2(x3+bw/2),cy,3,'Back'],['t',n2(x4+bw/2),cy,3,'Front'],['t',n2(W/2),H-5,5,o.model]);
  return{W,H,P}}
 function svgFor(o){const g=geo(o),f=o.fixed,at=c=>`fill="none" stroke="${c==='R'?'#FF0000':'#0000FF'}" stroke-width="0.1"`,
  sh=p=>{const k=p[0],a=at(p[p.length-1]);return k==='rr'?`<rect x="${p[1]}" y="${p[2]}" width="${p[3]}" height="${p[4]}" rx="${p[5]}" ry="${p[5]}" ${a}/>`:k==='c'?`<circle cx="${p[1]}" cy="${p[2]}" r="${p[3]/2}" ${a}/>`:`<polygon points="${p[1].map(q=>q.join(',')).join(' ')}" ${a}/>`},
@@ -252,7 +259,7 @@ function dl(m,f){const o=(BUILT||[]).find(x=>x.model===m);if(!o)return;
   img.src='data:image/svg+xml;utf8,'+encodeURIComponent(o.svg.split('stroke-width="0.1"').join('stroke-width="0.35"'))}}
 /* admin: camera + side cuts adjust (verified fix saved for everyone) */
 let EDIT=null;const cl=x=>JSON.parse(JSON.stringify(x||[]));
-function camEdit(m){const o=BUILT.find(x=>x.model===m);EDIT={m,cam:cl(o.cam),cuts:cl(o.cuts)};edDraw()}
+function camEdit(m){const o=BUILT.find(x=>x.model===m);EDIT={m,cam:cl(o.cam),cuts:cl(o.fixed?o.cuts:presetCuts(o))};edDraw()}
 function edRows(k){return EDIT[k].map((s,i)=>`<div class="small" style="margin-top:8px">${s[0]==='c'?'Circle: x, y, diameter':'Rect: x, y, width, height, radius'} <button class="btn s" style="background:#b91c1c" onclick="EDIT.${k}.splice(${i},1);edDraw()">🗑</button></div><div style="display:flex;gap:4px">${s.slice(1).map((v,j)=>`<input type="number" step="0.1" value="${v}" onchange="EDIT.${k}[${i}][${j+1}]=+this.value;edDraw()">`).join('')}</div>`).join('')}
 function addCut(k){const o=BUILT.find(x=>x.model===EDIT.m),t=o.t||8,bw=o.w-1,bh=o.h-1,u=t*.5;
  EDIT.cuts.push({L:['r',-t*.75,40,u,14,1],R:['r',bw+t*.25,50,u,14,1],B:['r',bw/2-6,bh+t*.25,12,u,1],T:['r',bw/2-4,-t*.75,8,u,1]}[k].map((v,i)=>i?n2(v):v));edDraw()}
