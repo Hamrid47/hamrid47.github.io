@@ -218,11 +218,29 @@ function builtinSkins(){return Object.entries(IPH).flatMap(([se,v])=>v.split(';'
 let BUILT=null;
 async function loadBuilt(){if(BUILT)return BUILT;let list=null;try{const r=await fetch('skins.json?v='+Date.now());if(r.ok){const j=await r.json();Object.assign(CAMF,j.cam||{});list=j.models}}catch(e){}
  BUILT=list?list.map(o=>{o.svg=svgFor(o);o.preview_url='data:image/svg+xml;utf8,'+encodeURIComponent(o.svg);return o}):builtinSkins();return BUILT}
-function dlSvg(m){const o=(BUILT||[]).find(x=>x.model===m);const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([o.svg],{type:'image/svg+xml'}));a.download=m+'.svg';document.body.appendChild(a);a.click();a.remove()}
+function save(b,n){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;document.body.appendChild(a);a.click();a.remove()}
+function geo(o){const r=o.r||(/11/.test(o.model)?9:10),[cw0,ch,cr,full]=CAMF[o.fam],cw=full?o.w-1:cw0,p=full?12.5:15;return{W:+(o.w+24).toFixed(2),H:+(o.h+38).toFixed(2),body:[12.5,12.5,o.w-1,o.h-1,r],cam:[p,p,cw,ch,cr]}}
+function dxfFor(o){const g=geo(o),F=(...a)=>a.join('\n')+'\n';let s=F(0,'SECTION',2,'HEADER',9,'$INSUNITS',70,4,0,'ENDSEC',0,'SECTION',2,'ENTITIES');
+ const rr=([x,y,w,h,r],L,c)=>{const yb=g.H-(y+h),yt=g.H-y,ln=(a,b,c2,d)=>{if(Math.hypot(a-c2,b-d)>1e-6)s+=F(0,'LINE',8,L,62,c,10,a,20,b,11,c2,21,d)},ar=(cx,cy,a1,a2)=>s+=F(0,'ARC',8,L,62,c,10,cx,20,cy,40,r,50,a1,51,a2);
+  ln(x+r,yb,x+w-r,yb);ln(x+w,yb+r,x+w,yt-r);ln(x+w-r,yt,x+r,yt);ln(x,yt-r,x,yb+r);ar(x+r,yb+r,180,270);ar(x+w-r,yb+r,270,360);ar(x+w-r,yt-r,0,90);ar(x+r,yt-r,90,180)};
+ rr(g.body,'CUT',1);rr(g.cam,'CAMERA',5);return s+F(0,'ENDSEC',0,'EOF')}
+function pdfFor(o){const g=geo(o),k=72/25.4,PW=g.W*k,PH=g.H*k,m=v=>(v*k).toFixed(3);
+ const rr=([x,y,w,h,r])=>{const Y=g.H-(y+h),c=r*.5523,X=x;return `${m(X+r)} ${m(Y)} m ${m(X+w-r)} ${m(Y)} l ${m(X+w-r+c)} ${m(Y)} ${m(X+w)} ${m(Y+r-c)} ${m(X+w)} ${m(Y+r)} c ${m(X+w)} ${m(Y+h-r)} l ${m(X+w)} ${m(Y+h-r+c)} ${m(X+w-r+c)} ${m(Y+h)} ${m(X+w-r)} ${m(Y+h)} c ${m(X+r)} ${m(Y+h)} l ${m(X+r-c)} ${m(Y+h)} ${m(X)} ${m(Y+h-r+c)} ${m(X)} ${m(Y+h-r)} c ${m(X)} ${m(Y+r)} l ${m(X)} ${m(Y+r-c)} ${m(X+r-c)} ${m(Y)} ${m(X+r)} ${m(Y)} c h S\n`};
+ const st=`1 1 1 rg 0 0 ${PW.toFixed(2)} ${PH.toFixed(2)} re f 0.283 w 1 0 0 RG ${rr(g.body)}0 0 1 RG [3.4 2.3] 0 d ${rr(g.cam)}[] 0 d 0 g BT /F1 14 Tf ${(PW/2-o.model.length*3.6).toFixed(1)} ${m(4)} Td (${o.model}) Tj ET`;
+ const ob=['<</Type/Catalog/Pages 2 0 R>>','<</Type/Pages/Kids[3 0 R]/Count 1>>',`<</Type/Page/Parent 2 0 R/MediaBox[0 0 ${PW.toFixed(2)} ${PH.toFixed(2)}]/Contents 4 0 R/Resources<</Font<</F1 5 0 R>>>>>>`,`<</Length ${st.length}>>\nstream\n${st}\nendstream`,'<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>'];
+ let out='%PDF-1.4\n',off=[];ob.forEach((b,i)=>{off.push(out.length);out+=`${i+1} 0 obj\n${b}\nendobj\n`});const xr=out.length;
+ return out+`xref\n0 6\n0000000000 65535 f \n`+off.map(v=>String(v).padStart(10,'0')+' 00000 n \n').join('')+`trailer\n<</Size 6/Root 1 0 R>>\nstartxref\n${xr}\n%%EOF`}
+function dl(m,f){const o=(BUILT||[]).find(x=>x.model===m);if(!o)return;
+ if(f==='SVG')save(new Blob([o.svg],{type:'image/svg+xml'}),m+'.svg');
+ else if(f==='DXF')save(new Blob([dxfFor(o)],{type:'application/dxf'}),m+'.dxf');
+ else if(f==='PDF')save(new Blob([pdfFor(o)],{type:'application/pdf'}),m+'.pdf');
+ else{const g=geo(o),px=300/25.4,w=Math.round(g.W*px),h=Math.round(g.H*px),img=new Image();
+  img.onload=()=>{const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,w,h);x.drawImage(img,0,0,w,h);c.toBlob(b=>save(b,m+'.png'))};
+  img.src='data:image/svg+xml;utf8,'+encodeURIComponent(o.svg.split('stroke-width="0.1"').join('stroke-width="0.35"'))}}
 /* skins */
 let SK=[],skinSeries='';
 async function skinsPage(){
- $('view').innerHTML=`<h2>📱 Skins</h2><p class="small" style="margin-bottom:8px">SVG vector (CorelDRAW ready, mm size). Cut se pehle ek test cut karke camera cutout verify karein.</p>${isAdmin?`<details class="card" style="margin-bottom:12px"><summary style="font-weight:800">＋ Naya skin add karein</summary>
+ $('view').innerHTML=`<h2>📱 Skins</h2><p class="small" style="margin-bottom:8px">Download formats: SVG, PDF (vector), DXF (plotter/Cutmate) aur PNG (Corel trace). Sab mm size mein.</p>${isAdmin?`<details class="card" style="margin-bottom:12px"><summary style="font-weight:800">＋ Naya skin add karein</summary>
  <select id="aBrand">${opts(BRANDS)}</select><input id="aSeries" placeholder="Series (e.g. iPhone 15 Series, Note 30)"><input id="aModel" placeholder="Model name (e.g. iPhone 15 Pro Max)">
  <p class="small">Vector file (.cdr / .svg / .eps / .pdf / .ai)</p><input id="aFile" type="file"><p class="small">Preview image (optional)</p><input id="aPrev" type="file" accept="image/*">
  <button class="btn" onclick="addSkin()">Upload skin</button><div id="smsg" class="msg"></div></details>`:''}
@@ -231,7 +249,7 @@ async function skinsPage(){
 function drawSkins(){
  $('chips').innerHTML=['All',...BRANDS].map(b=>`<button class="${b===skinBrand?'on':''}" onclick="skinBrand='${b}';skinSeries='';drawSkins()">${b}</button>`).join('');
  const q=skinQ.trim().toLowerCase(),B=SK.filter(s=>skinBrand==='All'||s.brand===skinBrand),ser=s=>s.series||'Other';
- const card=s=>`<div class="sk">${s.preview_url?`<img src="${esc(s.preview_url)}">`:''}<div><b>${esc(s.model)}</b><div class="small">${esc(s.brand)} • ${esc(ser(s))}</div></div>${s.svg?`<button class="btn s" onclick="dlSvg('${esc(s.model)}')">⬇ Download SVG</button>`:`<a class="btn s" style="text-decoration:none" href="${esc(s.file_url)}" download target="_blank">⬇ Download</a>`}<button class="btn s" onclick="tutorialList('${esc(s.brand)}')">🎬 Tutorial</button>${isAdmin&&!s.svg?`<button class="btn s" style="background:#b91c1c" onclick="delSkin(${s.id})">🗑</button>`:''}</div>`;
+ const card=s=>`<div class="sk">${s.preview_url?`<img src="${esc(s.preview_url)}">`:''}<div><b>${esc(s.model)}</b><div class="small">${esc(s.brand)} • ${esc(ser(s))}</div></div>${s.svg?`${['SVG','PDF','DXF','PNG'].map(f=>`<button class="btn s" onclick="dl('${esc(s.model)}','${f}')">⬇ ${f}</button>`).join('')}`:`<a class="btn s" style="text-decoration:none" href="${esc(s.file_url)}" download target="_blank">⬇ Download</a>`}<button class="btn s" onclick="tutorialList('${esc(s.brand)}')">🎬 Tutorial</button>${isAdmin&&!s.svg?`<button class="btn s" style="background:#b91c1c" onclick="delSkin(${s.id})">🗑</button>`:''}</div>`;
  if(q){const L=B.filter(s=>(s.model+' '+ser(s)+' '+s.brand).toLowerCase().includes(q));$('sl').innerHTML=L.length?L.map(card).join(''):'<p class="small">Koi model nahi mila.</p>';return}
  if(skinSeries){const L=B.filter(s=>ser(s)===skinSeries);$('sl').innerHTML=`<button class="btn s" onclick="skinSeries='';drawSkins()">← Sab series</button><h3 style="margin:10px 0;color:#22d3ee">${esc(skinSeries)} (${L.length} models)</h3>`+L.map(card).join('');return}
  const G={};B.forEach(s=>{(G[s.brand+'|'+ser(s)]=G[s.brand+'|'+ser(s)]||[]).push(s)});
